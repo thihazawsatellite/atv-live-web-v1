@@ -33,7 +33,7 @@ window.handleLogout = () => signOut(auth);
 var player = new Clappr.Player({ parentId: "#player", width: '100%', height: '100%' });
 
 async function loadM3U() {
-    const res = await fetch('https://github.com/thihazawsatellite/m3u1');
+    const res = await fetch('m.m3u');
     const data = await res.text();
     const list = document.getElementById('channel-list');
     list.innerHTML = '';
