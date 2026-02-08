@@ -7,33 +7,111 @@
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
     <style>
-        body { font-family: sans-serif; background-color: #1a1a1a; color: white; text-align: center; margin: 0; padding: 20px; }
-        .video-container { max-width: 800px; margin: auto; background: #000; border-radius: 8px; overflow: hidden; }
-        video { width: 100%; aspect-ratio: 16 / 9; }
-        .channel-list { margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; max-width: 1000px; margin-left: auto; margin-right: auto; }
-        .channel-btn { background: #333; color: white; border: 1px solid #444; padding: 10px; cursor: pointer; border-radius: 5px; font-size: 14px; transition: 0.3s; }
-        .channel-btn:hover { background: #ff0000; border-color: #ff0000; }
-        h1 { color: #ff0000; }
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #0f0f0f; 
+            color: white; 
+            margin: 0; 
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        /* Header ကို အပေါ်ဆုံးမှာ အမြဲကပ်နေအောင် လုပ်ခြင်း */
+        .header {
+            position: sticky;
+            top: 0;
+            width: 100%;
+            background-color: #1a1a1a;
+            padding: 15px;
+            text-align: center;
+            z-index: 1000; /* အခြားအရာများအပေါ်မှာ ရှိနေစေရန် */
+            border-bottom: 2px solid #ff0000;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #ff0000;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .video-container { 
+            width: 100%;
+            max-width: 850px; 
+            margin: 20px auto; 
+            background: #000; 
+            box-shadow: 0 0 20px rgba(255,0,0,0.2);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        video { 
+            width: 100%; 
+            display: block;
+            aspect-ratio: 16 / 9; 
+        }
+
+        .channel-list { 
+            width: 100%;
+            max-width: 900px;
+            padding: 20px;
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); 
+            gap: 12px; 
+        }
+
+        .channel-btn { 
+            background: #2a2a2a; 
+            color: white; 
+            border: 1px solid #444; 
+            padding: 15px 10px; 
+            cursor: pointer; 
+            border-radius: 6px; 
+            font-size: 14px;
+            transition: all 0.2s;
+            font-weight: bold;
+        }
+
+        .channel-btn:hover {
+            background: #ff0000;
+            border-color: #ff0000;
+            transform: translateY(-2px);
+        }
+
+        .channel-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* ဖုန်းနဲ့ကြည့်ရင် စာသားမပျောက်အောင် */
+        @media (max-width: 600px) {
+            .header h1 { font-size: 20px; }
+            .channel-list { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+        }
     </style>
 </head>
 <body>
 
-    <h1>ATV LIVE</h1>
+    <div class="header">
+        <h1>ATV LIVE</h1>
+    </div>
 
     <div class="video-container">
-        <video id="videoPlayer" controls autoplay></video>
+        <video id="videoPlayer" controls autoplay playsinline></video>
     </div>
 
     <div class="channel-list" id="channelList">
-        <p>Loading channels...</p>
+        <p>လိုင်းများအား ဆွဲယူနေသည်...</p>
     </div>
 
     <script>
-        // ၁။ Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyB6alJRVgruWpnsWlagz6HiYjXxzRAJYqM",
             authDomain: "atv-live-mm.firebaseapp.com",
@@ -44,11 +122,9 @@
             databaseURL: "https://atv-live-mm-default-rtdb.asia-southeast1.firebasedatabase.app"
         };
 
-        // ၂။ Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // ၃။ Video Player Function (HLS Support)
         function playChannel(url) {
             const video = document.getElementById('videoPlayer');
             if (Hls.isSupported()) {
@@ -58,36 +134,30 @@
                 hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
             } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
                 video.src = url;
-                video.addEventListener('loadedmetadata', () => video.play());
-            } else {
-                alert("သင့် Browser သည် ဤဗီဒီယိုအမျိုးအစားကို Support မလုပ်ပါ။");
             }
         }
 
-        // ၄။ Fetch Channels from Realtime Database
-        const channelListDiv = document.getElementById('channelList');
-
         database.ref('channels').on('value', (snapshot) => {
             const data = snapshot.val();
-            channelListDiv.innerHTML = ""; // Clear loader text
+            const list = document.getElementById('channelList');
+            list.innerHTML = ""; 
 
             if (data) {
                 Object.keys(data).forEach((id) => {
-                    const channel = data[id];
                     const btn = document.createElement('button');
                     btn.className = "channel-btn";
-                    btn.innerText = channel.name;
+                    btn.innerText = data[id].name;
                     btn.onclick = () => {
-                        playChannel(channel.url);
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        playChannel(data[id].url);
+                        // အပေါ်ဆုံးက Header ဆီသို့ ပြန်မသွားဘဲ Video ဆီသို့ပဲ သွားရန်
+                        document.querySelector('.video-container').scrollIntoView({ behavior: 'smooth' });
                     };
-                    channelListDiv.appendChild(btn);
+                    list.appendChild(btn);
                 });
             } else {
-                channelListDiv.innerHTML = "<p>ဒေတာ မရှိသေးပါ။ Firebase မှာ Import JSON အရင်လုပ်ပါ။</p>";
+                list.innerHTML = "<p style='text-align:center; width:100%;'>Firebase မှာ data မရှိသေးပါ။</p>";
             }
         });
     </script>
-
 </body>
 </html>
