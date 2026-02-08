@@ -3,112 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATV LIVE - MM</title>
+    <title>ATV LIVE - MM (Login စနစ်ပါဝင်သည်)</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
     <style>
-        * { box-sizing: border-box; }
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background-color: #0f0f0f; 
-            color: white; 
-            margin: 0; 
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        
-        /* Header ကို အပေါ်ဆုံးမှာ အမြဲကပ်နေအောင် လုပ်ခြင်း */
-        .header {
-            position: sticky;
-            top: 0;
-            width: 100%;
-            background-color: #1a1a1a;
-            padding: 15px;
-            text-align: center;
-            z-index: 1000; /* အခြားအရာများအပေါ်မှာ ရှိနေစေရန် */
-            border-bottom: 2px solid #ff0000;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-        }
-
-        .header h1 {
-            margin: 0;
-            font-size: 24px;
-            color: #ff0000;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-
-        .video-container { 
-            width: 100%;
-            max-width: 850px; 
-            margin: 20px auto; 
-            background: #000; 
-            box-shadow: 0 0 20px rgba(255,0,0,0.2);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        video { 
-            width: 100%; 
-            display: block;
-            aspect-ratio: 16 / 9; 
-        }
-
-        .channel-list { 
-            width: 100%;
-            max-width: 900px;
-            padding: 20px;
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); 
-            gap: 12px; 
-        }
-
-        .channel-btn { 
-            background: #2a2a2a; 
-            color: white; 
-            border: 1px solid #444; 
-            padding: 15px 10px; 
-            cursor: pointer; 
-            border-radius: 6px; 
-            font-size: 14px;
-            transition: all 0.2s;
-            font-weight: bold;
-        }
-
-        .channel-btn:hover {
-            background: #ff0000;
-            border-color: #ff0000;
-            transform: translateY(-2px);
-        }
-
-        .channel-btn:active {
-            transform: scale(0.95);
-        }
-
-        /* ဖုန်းနဲ့ကြည့်ရင် စာသားမပျောက်အောင် */
-        @media (max-width: 600px) {
-            .header h1 { font-size: 20px; }
-            .channel-list { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
-        }
+        /* အရင် Style အတိုင်းပဲ ထားပြီး Login Box အတွက် ထပ်တိုးထားပါတယ် */
+        body { font-family: sans-serif; background-color: #0f0f0f; color: white; margin: 0; text-align: center; }
+        .header { position: sticky; top: 0; width: 100%; background: #1a1a1a; padding: 15px; z-index: 1000; border-bottom: 2px solid red; }
+        .auth-container { margin: 20px auto; max-width: 350px; padding: 20px; background: #222; border-radius: 8px; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 4px; border: none; }
+        .auth-btn { width: 100%; padding: 10px; background: red; color: white; border: none; cursor: pointer; font-weight: bold; border-radius: 4px; }
+        #mainContent { display: none; } /* Login မဝင်မချင်း ဖျောက်ထားမည် */
+        .user-info { font-size: 12px; margin-bottom: 10px; color: #ccc; }
+        .logout-btn { background: #444; color: white; border: none; padding: 5px 10px; cursor: pointer; font-size: 11px; margin-top: 5px; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <h1>ATV LIVE</h1>
+        <div id="userInfoArea"></div>
     </div>
 
-    <div class="video-container">
-        <video id="videoPlayer" controls autoplay playsinline></video>
+    <div id="loginArea" class="auth-container">
+        <h3>User Login</h3>
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password">
+        <button class="auth-btn" onclick="login()">Login</button>
+        <p style="font-size: 12px; margin-top: 15px;">Account မရှိသေးရင် အလိုအလျောက် Register လုပ်ပေးပါမည်။</p>
     </div>
 
-    <div class="channel-list" id="channelList">
-        <p>လိုင်းများအား ဆွဲယူနေသည်...</p>
+    <div id="mainContent">
+        <div class="video-container" style="max-width: 850px; margin: 20px auto;">
+            <video id="videoPlayer" controls autoplay playsinline style="width: 100%; aspect-ratio: 16/9; background: #000;"></video>
+        </div>
+        <div class="channel-list" id="channelList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; padding: 20px;">
+            <p>လိုင်းများအား ဆွဲယူနေသည်...</p>
+        </div>
     </div>
 
     <script>
@@ -123,7 +58,60 @@
         };
 
         firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
         const database = firebase.database();
+
+        // Login Function
+        function login() {
+            const e = document.getElementById('email').value;
+            const p = document.getElementById('password').value;
+            auth.signInWithEmailAndPassword(e, p).catch(err => {
+                // Account မရှိရင် Register လုပ်ပေးခြင်း
+                if(err.code === 'auth/user-not-found') {
+                    auth.createUserWithEmailAndPassword(e, p);
+                } else {
+                    alert(err.message);
+                }
+            });
+        }
+
+        // Logout Function
+        function logout() { auth.signOut(); }
+
+        // Auth State ပြောင်းလဲမှုကို စစ်ဆေးခြင်း
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById('loginArea').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                document.getElementById('userInfoArea').innerHTML = `
+                    <div class="user-info">${user.email} ဝင်ရောက်ထားပါသည်</div>
+                    <button class="logout-btn" onclick="logout()">Logout</button>
+                `;
+                loadChannels();
+            } else {
+                document.getElementById('loginArea').style.display = 'block';
+                document.getElementById('mainContent').style.display = 'none';
+                document.getElementById('userInfoArea').innerHTML = "";
+            }
+        });
+
+        // Channel များအား Database မှ ဆွဲထုတ်ခြင်း
+        function loadChannels() {
+            database.ref('channels').on('value', (snapshot) => {
+                const data = snapshot.val();
+                const list = document.getElementById('channelList');
+                list.innerHTML = ""; 
+                if (data) {
+                    Object.keys(data).forEach((id) => {
+                        const btn = document.createElement('button');
+                        btn.style.cssText = "background:#2a2a2a; color:white; border:1px solid #444; padding:15px; border-radius:6px; cursor:pointer;";
+                        btn.innerText = data[id].name;
+                        btn.onclick = () => playChannel(data[id].url);
+                        list.appendChild(btn);
+                    });
+                }
+            });
+        }
 
         function playChannel(url) {
             const video = document.getElementById('videoPlayer');
@@ -136,28 +124,6 @@
                 video.src = url;
             }
         }
-
-        database.ref('channels').on('value', (snapshot) => {
-            const data = snapshot.val();
-            const list = document.getElementById('channelList');
-            list.innerHTML = ""; 
-
-            if (data) {
-                Object.keys(data).forEach((id) => {
-                    const btn = document.createElement('button');
-                    btn.className = "channel-btn";
-                    btn.innerText = data[id].name;
-                    btn.onclick = () => {
-                        playChannel(data[id].url);
-                        // အပေါ်ဆုံးက Header ဆီသို့ ပြန်မသွားဘဲ Video ဆီသို့ပဲ သွားရန်
-                        document.querySelector('.video-container').scrollIntoView({ behavior: 'smooth' });
-                    };
-                    list.appendChild(btn);
-                });
-            } else {
-                list.innerHTML = "<p style='text-align:center; width:100%;'>Firebase မှာ data မရှိသေးပါ။</p>";
-            }
-        });
     </script>
 </body>
 </html>
