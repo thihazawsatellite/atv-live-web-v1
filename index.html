@@ -1,1 +1,36 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATV LIVE</title>
+    <script type="importmap">
+      {
+        "imports": {
+          "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+          "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"
+        }
+      }
+    </script>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
+</head>
+<body>
+    <div id="login-screen">
+        <div class="login-box">
+            <h2 style="color: red;">ATV LIVE</h2>
+            <input type="email" id="email" placeholder="Email">
+            <input type="password" id="password" placeholder="Password">
+            <button onclick="handleLogin()">LOGIN</button>
+            <p id="msg" style="color: #ff4444;"></p>
+        </div>
+    </div>
+    <div id="main-content" style="display: none;">
+        <div id="player"></div>
+        <div id="channel-list"></div>
+        <button onclick="handleLogout()" class="logout-btn">LOGOUT</button>
+    </div>
+    <script type="module" src="script.js"></script>
+</body>
+</html>
