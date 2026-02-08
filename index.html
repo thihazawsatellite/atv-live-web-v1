@@ -1,42 +1,93 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="my">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATV LIVE</title>
+    <title>ATV LIVE - MM</title>
     
-    <script type="importmap">
-      {
-        "imports": {
-          "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
-          "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
-          "firebase/database": "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"
-        }
-      }
-    </script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     
-    <link rel="stylesheet" href="style.css">
-    
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+    <style>
+        body { font-family: sans-serif; background-color: #1a1a1a; color: white; text-align: center; margin: 0; padding: 20px; }
+        .video-container { max-width: 800px; margin: auto; background: #000; border-radius: 8px; overflow: hidden; }
+        video { width: 100%; aspect-ratio: 16 / 9; }
+        .channel-list { margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; max-width: 1000px; margin-left: auto; margin-right: auto; }
+        .channel-btn { background: #333; color: white; border: 1px solid #444; padding: 10px; cursor: pointer; border-radius: 5px; font-size: 14px; transition: 0.3s; }
+        .channel-btn:hover { background: #ff0000; border-color: #ff0000; }
+        h1 { color: #ff0000; }
+    </style>
 </head>
 <body>
-    <div id="login-screen">
-        <div class="login-box">
-            <h2 style="color: red;">ATV LIVE</h2>
-            <input type="email" id="email" placeholder="Email">
-            <input type="password" id="password" placeholder="Password">
-            <button onclick="handleLogin()">LOGIN</button>
-            <p id="msg" style="color: #ff4444;"></p>
-        </div>
+
+    <h1>ATV LIVE</h1>
+
+    <div class="video-container">
+        <video id="videoPlayer" controls autoplay></video>
     </div>
 
-    <div id="main-content" style="display: none;">
-        <div id="player"></div>
-        <div id="channel-list"></div>
-        <button onclick="handleLogout()" class="logout-btn">LOGOUT</button>
+    <div class="channel-list" id="channelList">
+        <p>Loading channels...</p>
     </div>
 
-    <script type="module" src="script.js"></script>
+    <script>
+        // ၁။ Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyB6alJRVgruWpnsWlagz6HiYjXxzRAJYqM",
+            authDomain: "atv-live-mm.firebaseapp.com",
+            projectId: "atv-live-mm",
+            storageBucket: "atv-live-mm.firebasestorage.app",
+            messagingSenderId: "1025513548303",
+            appId: "1:1025513548303:web:4ca401320010eba9b9d17a",
+            databaseURL: "https://atv-live-mm-default-rtdb.asia-southeast1.firebasedatabase.app"
+        };
+
+        // ၂။ Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // ၃။ Video Player Function (HLS Support)
+        function playChannel(url) {
+            const video = document.getElementById('videoPlayer');
+            if (Hls.isSupported()) {
+                const hls = new Hls();
+                hls.loadSource(url);
+                hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = url;
+                video.addEventListener('loadedmetadata', () => video.play());
+            } else {
+                alert("သင့် Browser သည် ဤဗီဒီယိုအမျိုးအစားကို Support မလုပ်ပါ။");
+            }
+        }
+
+        // ၄။ Fetch Channels from Realtime Database
+        const channelListDiv = document.getElementById('channelList');
+
+        database.ref('channels').on('value', (snapshot) => {
+            const data = snapshot.val();
+            channelListDiv.innerHTML = ""; // Clear loader text
+
+            if (data) {
+                Object.keys(data).forEach((id) => {
+                    const channel = data[id];
+                    const btn = document.createElement('button');
+                    btn.className = "channel-btn";
+                    btn.innerText = channel.name;
+                    btn.onclick = () => {
+                        playChannel(channel.url);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    };
+                    channelListDiv.appendChild(btn);
+                });
+            } else {
+                channelListDiv.innerHTML = "<p>ဒေတာ မရှိသေးပါ။ Firebase မှာ Import JSON အရင်လုပ်ပါ။</p>";
+            }
+        });
+    </script>
+
 </body>
 </html>
