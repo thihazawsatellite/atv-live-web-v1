@@ -1,6 +1,6 @@
-
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
+import { getDatabase, ref, onValue } from "firebase/database";
 
 const firebaseConfig = {
   apiKey: "AIzaSyB6alJRVgruWpnsWlagz6HiYjXxzRAJYqM",
@@ -8,44 +8,56 @@ const firebaseConfig = {
   projectId: "atv-live-mm",
   storageBucket: "atv-live-mm.firebasestorage.app",
   messagingSenderId: "1025513548303",
-  appId: "1:1025513548303:web:4ca401320010eba9b9d17a"
+  appId: "1:1025513548303:web:4ca401320010eba9b9d17a",
+  databaseURL: "https://atv-live-mm-default-rtdb.firebaseio.com" // သင့် Database URL
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getDatabase(app);
 
+// Login စစ်ဆေးခြင်း
 onAuthStateChanged(auth, (user) => {
     const login = document.getElementById('login-screen');
     const main = document.getElementById('main-content');
-    if (user) { login.style.display = 'none'; main.style.display = 'block'; loadM3U(); }
-    else { login.style.display = 'flex'; main.style.display = 'none'; }
+    if (user) {
+        login.style.display = 'none';
+        main.style.display = 'block';
+        loadChannels(); // Database မှ Channel များခေါ်ယူရန်
+    } else {
+        login.style.display = 'flex';
+        main.style.display = 'none';
+    }
 });
+
+// Database မှ Channel များခေါ်ယူပြသပေးမည့် Function
+function loadChannels() {
+    const channelRef = ref(db, 'channels');
+    onValue(channelRef, (snapshot) => {
+        const data = snapshot.val();
+        const listContainer = document.getElementById('channel-list');
+        listContainer.innerHTML = '';
+        
+        for (let id in data) {
+            const item = document.createElement('div');
+            item.className = 'channel-item';
+            item.innerHTML = `<span>${data[id].name}</span>`;
+            item.onclick = () => {
+                player.configure({ source: data[id].url, autoPlay: true });
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+            listContainer.appendChild(item);
+        }
+    });
+}
 
 window.handleLogin = async () => {
     const e = document.getElementById('email').value;
     const p = document.getElementById('password').value;
     try { await signInWithEmailAndPassword(auth, e, p); }
-    catch (err) { document.getElementById('msg').innerText = "Login Failed!"; }
+    catch (err) { document.getElementById('msg').innerText = "Email သို့မဟုတ် Password မှားနေပါသည်။"; }
 };
 
 window.handleLogout = () => signOut(auth);
 
 var player = new Clappr.Player({ parentId: "#player", width: '100%', height: '100%' });
-
-async function loadM3U() {
-    const res = await fetch('m.m3u');
-    const data = await res.text();
-    const list = document.getElementById('channel-list');
-    list.innerHTML = '';
-    data.split('\n').forEach((line, i, arr) => {
-        if (line.startsWith('#EXTINF')) {
-            const name = line.split(',')[1];
-            const url = arr[i+1];
-            const div = document.createElement('div');
-            div.className = 'channel-item';
-            div.innerText = name;
-            div.onclick = () => player.configure({ source: url, autoPlay: true });
-            list.appendChild(div);
-        }
-    });
-}
