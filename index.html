@@ -6,44 +6,36 @@
     <title>ATV LIVE - MM</title>
     
     <link href="https://vjs.zencdn.net/7.20.3/video-js.css" rel="stylesheet" />
-    <link href="https://unpkg.com/videojs-contrib-quality-levels@2.1.0/dist/videojs-contrib-quality-levels.css" rel="stylesheet">
 
     <style>
-        body { font-family: sans-serif; background-color: #000; color: white; margin: 0; padding-top: 60px; }
-        .header { position: fixed; top: 0; left: 0; width: 100%; height: 50px; background: #111; color: #ff0000; display: flex; align-items: center; justify-content: center; z-index: 9999; border-bottom: 1px solid #333; }
-        .video-container { width: 100%; max-width: 100%; margin: auto; background: #000; }
-        .video-js { width: 100% !important; aspect-ratio: 16 / 9; }
-        video { object-fit: fill !important; }
-        .channel-list { padding: 15px; display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
-        .channel-btn { background: #222; color: white; border: 1px solid #444; padding: 12px 5px; cursor: pointer; border-radius: 4px; font-size: 11px; font-weight: bold; }
-        .channel-btn:active { background: #ff0000; }
+        body { font-family: sans-serif; background-color: #000; color: white; margin: 0; padding-top: 50px; }
+        .header { position: fixed; top: 0; width: 100%; height: 50px; background: #111; color: red; display: flex; align-items: center; justify-content: center; z-index: 9999; }
         
-        /* Quality Menu Style */
-        .vjs-quality-selector { display: block !important; }
+        /* Screen အပြည့်ဖြစ်အောင် လုပ်ခြင်း */
+        .video-container { width: 100vw; background: #000; }
+        .video-js { width: 100% !important; height: 56.25vw !important; } /* 16:9 ratio */
+        
+        /* Video ကို ဘေးဘောင်မကျန်အောင် ဆွဲဆန့်ခြင်း */
+        video { object-fit: fill !important; }
+
+        .channel-list { padding: 10px; display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 5px; }
+        .channel-btn { background: #222; color: white; border: 1px solid #444; padding: 10px 2px; cursor: pointer; border-radius: 4px; font-size: 10px; }
+        .channel-btn:active { background: red; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h2 style="margin:0;">ATV LIVE</h2>
-    </div>
+    <div class="header"><h2>ATV LIVE</h2></div>
 
     <div class="video-container">
-        <video id="my-video" class="video-js vjs-big-play-centered vjs-fluid" controls preload="auto">
-            <p class="vjs-no-js">To view this video please enable JavaScript</p>
-        </video>
+        <video id="my-video" class="video-js vjs-big-play-centered" controls preload="auto" playsinline></video>
     </div>
 
-    <div class="channel-list" id="channelList">
-        <p>Loading...</p>
-    </div>
+    <div class="channel-list" id="channelList"><p>Loading...</p></div>
 
+    <script src="https://vjs.zencdn.net/7.20.3/video.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    
-    <script src="https://vjs.zencdn.net/7.20.3/video.min.js"></script>
-    <script src="https://unpkg.com/videojs-contrib-quality-levels@2.1.0/dist/videojs-contrib-quality-levels.min.js"></script>
-    <script src="https://unpkg.com/videojs-hls-quality-selector@1.1.4/dist/videojs-hls-quality-selector.min.js"></script>
 
     <script>
         const firebaseConfig = {
@@ -59,9 +51,17 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // Player Initializing with Quality Selector
-        const player = videojs('my-video');
-        player.hlsQualitySelector({ displayCurrentQuality: true });
+        // Buffer ကို 2MB လိုင်းအတွက် အဆင်ပြေအောင် ချိန်ညှိခြင်း
+        const player = videojs('my-video', {
+            html5: {
+                hls: {
+                    overrideNative: true,
+                    bandwidth: 2000000, // 2MB speed ကို အခြေခံထားခြင်း
+                    enableLowInitialPlaylist: true,
+                    smoothQualityChange: true
+                }
+            }
+        });
 
         function playChannel(url) {
             player.src({ type: 'application/x-mpegURL', src: url });
@@ -73,7 +73,6 @@
             const data = snapshot.val();
             const list = document.getElementById('channelList');
             list.innerHTML = ""; 
-
             if (data) {
                 Object.keys(data).forEach((id) => {
                     const btn = document.createElement('button');
@@ -87,4 +86,3 @@
     </script>
 </body>
 </html>
-
