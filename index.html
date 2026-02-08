@@ -1,61 +1,23 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js"></script> ```
-
----
-
-### ၂။ လုံုံခြုံရေးအတွက် `m.m3u` ကို Firebase မှာ သိမ်းမယ်
-သင်စိုးရိမ်သလို Link တွေ သူများယူမရအောင် **Firebase Realtime Database** မှာ သိမ်းတဲ့နည်းကို သုံးကြရအောင်။
-
-**က။ Firebase မှာ Data ထည့်နည်း:**
-1. Firebase Console က **Build > Realtime Database** ကို သွားပါ။
-2. **Create Database** ကို နှိပ်ပါ (Location ကို default ထားပါ)။
-3. **Rules** tab ကို သွားပြီး `".read": "auth != null"` လို့ ပြင်လိုက်ပါ (ဒါဆိုရင် Login ဝင်ထားသူပဲ ဖတ်လို့ရပါမယ်)။
-4. **Data** tab မှာ အောက်ပါအတိုင်း ပုံစံသွင်းပါ-
-   - `channels`
-     - `01`
-       - `name`: "Channel 1"
-       - `url`: "https://..."
-
-**ခ။ `script.js` ကို Update လုပ်နည်း:**
-အခုနက GitHub ထဲက `script.js` မှာ `fetch('m.m3u')` လုပ်မယ့်အစား Firebase ကနေ Data ယူအောင် ပြင်ပါမယ်။
-
-```javascript
-import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
-const db = getDatabase(app);
-
-async function loadChannelsFromFirebase() {
-    const channelRef = ref(db, 'channels');
-    onValue(channelRef, (snapshot) => {
-        const data = snapshot.val();
-        const list = document.getElementById('channel-list');
-        list.innerHTML = '';
-        for (let id in data) {
-            const item = document.createElement('div');
-            item.className = 'channel-item';
-            item.innerHTML = `<span>${data[id].name}</span>`;
-            item.onclick = () => player.configure({ source: data[id].url, autoPlay: true });
-            list.appendChild(item);
-        }
-    });
-}
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ATV LIVE</title>
+    
     <script type="importmap">
       {
         "imports": {
           "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
-          "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"
+          "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
+          "firebase/database": "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"
         }
       }
     </script>
+    
     <link rel="stylesheet" href="style.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
 </head>
 <body>
@@ -68,11 +30,13 @@ async function loadChannelsFromFirebase() {
             <p id="msg" style="color: #ff4444;"></p>
         </div>
     </div>
+
     <div id="main-content" style="display: none;">
         <div id="player"></div>
         <div id="channel-list"></div>
         <button onclick="handleLogout()" class="logout-btn">LOGOUT</button>
     </div>
+
     <script type="module" src="script.js"></script>
 </body>
 </html>
