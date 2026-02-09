@@ -1,0 +1,107 @@
+body { 
+    font-family: sans-serif; 
+    background-color: #0f0f0f; 
+    color: white; 
+    margin: 0; 
+    text-align: center; 
+}
+
+.header { 
+    position: sticky; 
+    top: 0; 
+    width: 100%; 
+    background: #1a1a1a; 
+    padding: 15px 0; 
+    z-index: 1000; 
+    border-bottom: 2px solid red; 
+}
+
+.auth-container { 
+    margin: 50px auto; 
+    max-width: 320px; 
+    padding: 25px; 
+    background: #1a1a1a; 
+    border-radius: 12px; 
+    border: 1px solid #333; 
+}
+
+input { 
+    width: 100%; 
+    padding: 12px; 
+    margin: 10px 0; 
+    border-radius: 6px; 
+    border: 1px solid #444; 
+    background: #000; 
+    color: white; 
+    box-sizing: border-box; 
+}
+
+.auth-btn { 
+    width: 100%; 
+    padding: 12px; 
+    background: red; 
+    color: white; 
+    border: none; 
+    cursor: pointer; 
+    font-weight: bold; 
+    border-radius: 6px; 
+    margin-bottom: 8px; 
+}
+
+#mainContent { 
+    display: none; 
+    padding: 10px; 
+}
+
+.video-container { 
+    width: 100%; 
+    max-width: 800px; 
+    margin: 10px auto; 
+    background: #000; 
+    border-radius: 8px; 
+    overflow: hidden; 
+    border: 1px solid #333; 
+}
+
+video { 
+    width: 100%; 
+    aspect-ratio: 16/9; 
+    display: block; 
+}
+
+.channel-list { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); 
+    gap: 10px; 
+    padding: 15px; 
+    max-width: 900px; 
+    margin: 0 auto; 
+}
+
+.channel-btn { 
+    background: #1a1a1a; 
+    color: white; 
+    border: 1px solid #333; 
+    padding: 15px 10px; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center;
+    transition: 0.2s; 
+}
+
+.channel-btn:hover { 
+    border-color: red; 
+}
+
+.logout-btn { 
+    background: #333; 
+    color: #fff; 
+    border: none; 
+    padding: 5px 12px; 
+    cursor: pointer; 
+    border-radius: 4px; 
+    font-size: 11px; 
+}
