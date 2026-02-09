@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATV LIVE - MM (Login စနစ်ပါဝင်သည်)</title>
+    <title>ATV LIVE - MM</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
@@ -11,138 +11,117 @@
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
     <style>
-        /* အရင် Style အတိုင်းပဲ ထားပြီး Login Box အတွက် ထပ်တိုးထားပါတယ် */
         body { font-family: sans-serif; background-color: #0f0f0f; color: white; margin: 0; text-align: center; }
         .header { position: sticky; top: 0; width: 100%; background: #1a1a1a; padding: 15px; z-index: 1000; border-bottom: 2px solid red; }
-        .auth-container { margin: 20px auto; max-width: 350px; padding: 20px; background: #222; border-radius: 8px; }
-        input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 4px; border: none; }
-        .auth-btn { width: 100%; padding: 10px; background: red; color: white; border: none; cursor: pointer; font-weight: bold; border-radius: 4px; }
-        #mainContent { display: none; } /* Login မဝင်မချင်း ဖျောက်ထားမည် */
-        .user-info { font-size: 12px; margin-bottom: 10px; color: #ccc; }
-        .logout-btn { background: #444; color: white; border: none; padding: 5px 10px; cursor: pointer; font-size: 11px; margin-top: 5px; }
+        .auth-container { margin: 50px auto; max-width: 320px; padding: 20px; background: #222; border-radius: 12px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 6px; border: 1px solid #444; background: #333; color: white; box-sizing: border-box; }
+        .auth-btn { width: 100%; padding: 12px; background: red; color: white; border: none; cursor: pointer; font-weight: bold; border-radius: 6px; margin: 5px 0; }
+        #mainContent { display: none; }
+        .user-info { font-size: 13px; color: #aaa; margin-bottom: 5px; }
+        .logout-btn { background: #444; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; }
+        .channel-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; padding: 20px; }
+        .channel-btn { background: #2a2a2a; color: white; border: 1px solid #444; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.3s; }
+        .channel-btn:hover { background: red; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>ATV LIVE</h1>
+        <h1 style="margin:0; color:red;">ATV LIVE</h1>
         <div id="userInfoArea"></div>
     </div>
 
     <div id="loginArea" class="auth-container">
-        <h3>User Login</h3>
+        <h2 style="margin-top:0;">Welcome</h2>
         <input type="email" id="email" placeholder="Email">
         <input type="password" id="password" placeholder="Password">
-        <button class="auth-btn" onclick="login()">Login</button>
-        <p style="font-size: 12px; margin-top: 15px;">Account မရှိသေးရင် အလိုအလျောက် Register လုပ်ပေးပါမည်။</p>
+        <button class="auth-btn" onclick="login()">Login (ဝင်ရောက်ရန်)</button>
+        <button class="auth-btn" style="background:#444;" onclick="register()">Register (အကောင့်သစ်ဖွင့်ရန်)</button>
     </div>
 
     <div id="mainContent">
-        <div class="video-container" style="max-width: 850px; margin: 20px auto;">
-            <video id="videoPlayer" controls autoplay playsinline style="width: 100%; aspect-ratio: 16/9; background: #000;"></video>
+        <div style="max-width:800px; margin:20px auto; background:#000;">
+            <video id="videoPlayer" controls autoplay playsinline style="width:100%; aspect-ratio:16/9;"></video>
         </div>
-        <div class="channel-list" id="channelList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; padding: 20px;">
-            <p>လိုင်းများအား ဆွဲယူနေသည်...</p>
-        </div>
+        <div class="channel-list" id="channelList"></div>
     </div>
 
     <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyB6alJRVgruWpnsWlagz6HiYjXxzRAJYqM",
-        authDomain: "atv-live-mm.firebaseapp.com",
-        projectId: "atv-live-mm",
-        storageBucket: "atv-live-mm.firebasestorage.app",
-        messagingSenderId: "1025513548303",
-        appId: "1:1025513548303:web:4ca401320010eba9b9d17a",
-        databaseURL: "https://atv-live-mm-default-rtdb.asia-southeast1.firebasedatabase.app"
-    };
+        const firebaseConfig = {
+            apiKey: "AIzaSyB6alJRVgruWpnsWlagz6HiYjXxzRAJYqM",
+            authDomain: "atv-live-mm.firebaseapp.com",
+            projectId: "atv-live-mm",
+            storageBucket: "atv-live-mm.firebasestorage.app",
+            messagingSenderId: "1025513548303",
+            appId: "1:1025513548303:web:4ca401320010eba9b9d17a",
+            databaseURL: "https://atv-live-mm-default-rtdb.asia-southeast1.firebasedatabase.app"
+        };
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const database = firebase.database();
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
 
-    function login() {
-        const e = document.getElementById('email').value;
-        const p = document.getElementById('password').value;
-        if(!e || !p) return alert("Email နှင့် Password ရိုက်ထည့်ပါ");
-        
-        auth.signInWithEmailAndPassword(e, p).catch(err => {
-            if(err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-                // အကောင့်မရှိရင် အလိုအလျောက်ဖွင့်ပေးမယ်
-                auth.createUserWithEmailAndPassword(e, p).catch(e => alert(e.message));
+        function login() {
+            const e = document.getElementById('email').value;
+            const p = document.getElementById('password').value;
+            auth.signInWithEmailAndPassword(e, p).catch(err => alert("Login Error: " + err.message));
+        }
+
+        function register() {
+            const e = document.getElementById('email').value;
+            const p = document.getElementById('password').value;
+            if(p.length < 6) return alert("Password သည် အနည်းဆုံး ၆ လုံးရှိရပါမည်");
+            auth.createUserWithEmailAndPassword(e, p).then(() => alert("အကောင့်ဖွင့်ပြီးပါပြီ")).catch(err => alert("Register Error: " + err.message));
+        }
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById('loginArea').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                document.getElementById('userInfoArea').innerHTML = `
+                    <div class="user-info">${user.email}</div>
+                    <button class="logout-btn" onclick="auth.signOut()">Logout</button>
+                `;
+                loadChannels();
             } else {
-                alert(err.message);
+                document.getElementById('loginArea').style.display = 'block';
+                document.getElementById('mainContent').style.display = 'none';
+                document.getElementById('userInfoArea').innerHTML = "";
             }
         });
-    }
 
-    function logout() { auth.signOut(); }
-
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            document.getElementById('loginArea').style.display = 'none';
-            document.getElementById('mainContent').style.display = 'block';
-            document.getElementById('userInfoArea').innerHTML = `
-                <div class="user-info">${user.email} ဝင်ရောက်ထားပါသည်</div>
-                <button class="logout-btn" onclick="logout()">Logout</button>
-            `;
-            loadChannels();
-        } else {
-            document.getElementById('loginArea').style.display = 'block';
-            document.getElementById('mainContent').style.display = 'none';
-            document.getElementById('userInfoArea').innerHTML = "";
-        }
-    });
-
-    // အဓိက ပြင်ဆင်ထားသော Function
-    function loadChannels() {
-        // 'channels' အောက်မှာ ရှိနေရင် 'channels' လို့ရေးပါ၊ 
-        // အကယ်၍ database အပြင်မှာတင် တိုက်ရိုက်ရှိနေရင် '/' လို့ ပြောင်းရေးပေးပါ
-        database.ref('channels').on('value', (snapshot) => {
-            const data = snapshot.val();
-            const list = document.getElementById('channelList');
-            list.innerHTML = ""; 
-            
-            if (data) {
-                // ဒေတာ ပုံစံကို Array ဖြစ်အောင် အရင်ပြောင်းခြင်း
-                const channelsArray = Array.isArray(data) ? data : Object.values(data);
-
-                channelsArray.forEach((item) => {
-                    if(item && item.name && item.url) {
+        function loadChannels() {
+            database.ref('channels').on('value', (snapshot) => {
+                const data = snapshot.val();
+                const list = document.getElementById('channelList');
+                list.innerHTML = "";
+                if (data) {
+                    Object.keys(data).forEach(id => {
+                        const channel = data[id];
                         const btn = document.createElement('button');
                         btn.className = "channel-btn";
-                        btn.style.cssText = "background:#2a2a2a; color:white; border:1px solid #444; padding:10px; border-radius:6px; cursor:pointer; min-height:80px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;";
-                        
-                        // Logo ပါရင်ပြမယ်၊ မပါရင် နာမည်ပဲပြမယ်
-                        const logoImg = item.logo ? `<img src="${item.logo}" style="width:40px;height:40px;object-fit:contain;">` : "";
-                        btn.innerHTML = `${logoImg} <span style="font-size:12px;">${item.name}</span>`;
-                        
+                        btn.innerHTML = channel.name;
                         btn.onclick = () => {
+                            playChannel(channel.url);
                             window.scrollTo({top: 0, behavior: 'smooth'});
-                            playChannel(item.url);
                         };
                         list.appendChild(btn);
-                    }
-                });
-            } else {
-                list.innerHTML = "<p>ဒေတာ မရှိသေးပါ။ Firebase Database ကို စစ်ဆေးပါ။</p>";
-            }
-        });
-    }
-
-    function playChannel(url) {
-        const video = document.getElementById('videoPlayer');
-        if (Hls.isSupported()) {
-            const hls = new Hls();
-            hls.loadSource(url);
-            hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            video.src = url;
-            video.play();
+                    });
+                }
+            });
         }
-    }
-</script>
 
+        function playChannel(url) {
+            const video = document.getElementById('videoPlayer');
+            if (Hls.isSupported()) {
+                const hls = new Hls();
+                hls.loadSource(url);
+                hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = url;
+            }
+        }
+    </script>
 </body>
 </html>
