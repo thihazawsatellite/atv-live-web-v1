@@ -47,83 +47,102 @@
     </div>
 
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyB6alJRVgruWpnsWlagz6HiYjXxzRAJYqM",
-            authDomain: "atv-live-mm.firebaseapp.com",
-            projectId: "atv-live-mm",
-            storageBucket: "atv-live-mm.firebasestorage.app",
-            messagingSenderId: "1025513548303",
-            appId: "1:1025513548303:web:4ca401320010eba9b9d17a",
-            databaseURL: "https://atv-live-mm-default-rtdb.asia-southeast1.firebasedatabase.app"
-        };
+    const firebaseConfig = {
+        apiKey: "AIzaSyB6alJRVgruWpnsWlagz6HiYjXxzRAJYqM",
+        authDomain: "atv-live-mm.firebaseapp.com",
+        projectId: "atv-live-mm",
+        storageBucket: "atv-live-mm.firebasestorage.app",
+        messagingSenderId: "1025513548303",
+        appId: "1:1025513548303:web:4ca401320010eba9b9d17a",
+        databaseURL: "https://atv-live-mm-default-rtdb.asia-southeast1.firebasedatabase.app"
+    };
 
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const database = firebase.database();
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const database = firebase.database();
 
-        // Login Function
-        function login() {
-            const e = document.getElementById('email').value;
-            const p = document.getElementById('password').value;
-            auth.signInWithEmailAndPassword(e, p).catch(err => {
-                // Account မရှိရင် Register လုပ်ပေးခြင်း
-                if(err.code === 'auth/user-not-found') {
-                    auth.createUserWithEmailAndPassword(e, p);
-                } else {
-                    alert(err.message);
-                }
-            });
-        }
-
-        // Logout Function
-        function logout() { auth.signOut(); }
-
-        // Auth State ပြောင်းလဲမှုကို စစ်ဆေးခြင်း
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                document.getElementById('loginArea').style.display = 'none';
-                document.getElementById('mainContent').style.display = 'block';
-                document.getElementById('userInfoArea').innerHTML = `
-                    <div class="user-info">${user.email} ဝင်ရောက်ထားပါသည်</div>
-                    <button class="logout-btn" onclick="logout()">Logout</button>
-                `;
-                loadChannels();
+    function login() {
+        const e = document.getElementById('email').value;
+        const p = document.getElementById('password').value;
+        if(!e || !p) return alert("Email နှင့် Password ရိုက်ထည့်ပါ");
+        
+        auth.signInWithEmailAndPassword(e, p).catch(err => {
+            if(err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+                // အကောင့်မရှိရင် အလိုအလျောက်ဖွင့်ပေးမယ်
+                auth.createUserWithEmailAndPassword(e, p).catch(e => alert(e.message));
             } else {
-                document.getElementById('loginArea').style.display = 'block';
-                document.getElementById('mainContent').style.display = 'none';
-                document.getElementById('userInfoArea').innerHTML = "";
+                alert(err.message);
             }
         });
+    }
 
-        // Channel များအား Database မှ ဆွဲထုတ်ခြင်း
-        function loadChannels() {
-            database.ref('channels').on('value', (snapshot) => {
-                const data = snapshot.val();
-                const list = document.getElementById('channelList');
-                list.innerHTML = ""; 
-                if (data) {
-                    Object.keys(data).forEach((id) => {
+    function logout() { auth.signOut(); }
+
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            document.getElementById('loginArea').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+            document.getElementById('userInfoArea').innerHTML = `
+                <div class="user-info">${user.email} ဝင်ရောက်ထားပါသည်</div>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            `;
+            loadChannels();
+        } else {
+            document.getElementById('loginArea').style.display = 'block';
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('userInfoArea').innerHTML = "";
+        }
+    });
+
+    // အဓိက ပြင်ဆင်ထားသော Function
+    function loadChannels() {
+        // 'channels' အောက်မှာ ရှိနေရင် 'channels' လို့ရေးပါ၊ 
+        // အကယ်၍ database အပြင်မှာတင် တိုက်ရိုက်ရှိနေရင် '/' လို့ ပြောင်းရေးပေးပါ
+        database.ref('channels').on('value', (snapshot) => {
+            const data = snapshot.val();
+            const list = document.getElementById('channelList');
+            list.innerHTML = ""; 
+            
+            if (data) {
+                // ဒေတာ ပုံစံကို Array ဖြစ်အောင် အရင်ပြောင်းခြင်း
+                const channelsArray = Array.isArray(data) ? data : Object.values(data);
+
+                channelsArray.forEach((item) => {
+                    if(item && item.name && item.url) {
                         const btn = document.createElement('button');
-                        btn.style.cssText = "background:#2a2a2a; color:white; border:1px solid #444; padding:15px; border-radius:6px; cursor:pointer;";
-                        btn.innerText = data[id].name;
-                        btn.onclick = () => playChannel(data[id].url);
+                        btn.className = "channel-btn";
+                        btn.style.cssText = "background:#2a2a2a; color:white; border:1px solid #444; padding:10px; border-radius:6px; cursor:pointer; min-height:80px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;";
+                        
+                        // Logo ပါရင်ပြမယ်၊ မပါရင် နာမည်ပဲပြမယ်
+                        const logoImg = item.logo ? `<img src="${item.logo}" style="width:40px;height:40px;object-fit:contain;">` : "";
+                        btn.innerHTML = `${logoImg} <span style="font-size:12px;">${item.name}</span>`;
+                        
+                        btn.onclick = () => {
+                            window.scrollTo({top: 0, behavior: 'smooth'});
+                            playChannel(item.url);
+                        };
                         list.appendChild(btn);
-                    });
-                }
-            });
-        }
-
-        function playChannel(url) {
-            const video = document.getElementById('videoPlayer');
-            if (Hls.isSupported()) {
-                const hls = new Hls();
-                hls.loadSource(url);
-                hls.attachMedia(video);
-                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                video.src = url;
+                    }
+                });
+            } else {
+                list.innerHTML = "<p>ဒေတာ မရှိသေးပါ။ Firebase Database ကို စစ်ဆေးပါ။</p>";
             }
+        });
+    }
+
+    function playChannel(url) {
+        const video = document.getElementById('videoPlayer');
+        if (Hls.isSupported()) {
+            const hls = new Hls();
+            hls.loadSource(url);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = url;
+            video.play();
         }
-    </script>
+    }
+</script>
+
 </body>
 </html>
