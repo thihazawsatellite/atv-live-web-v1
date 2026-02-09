@@ -47,81 +47,60 @@
     </div>
 
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyB6alJRVgruWpnsWlagz6HiYjXxzRAJYqM",
-            authDomain: "atv-live-mm.firebaseapp.com",
-            projectId: "atv-live-mm",
-            storageBucket: "atv-live-mm.firebasestorage.app",
-            messagingSenderId: "1025513548303",
-            appId: "1:1025513548303:web:4ca401320010eba9b9d17a",
-            databaseURL: "https://atv-live-mm-default-rtdb.asia-southeast1.firebasedatabase.app"
-        };
+    const firebaseConfig = {
+        apiKey: "AIzaSyB6alJRVgruWpnsWlagz6HiYjXxzRAJYqM",
+        authDomain: "atv-live-mm.firebaseapp.com",
+        projectId: "atv-live-mm",
+        storageBucket: "atv-live-mm.firebasestorage.app",
+        messagingSenderId: "1025513548303",
+        appId: "1:1025513548303:web:4ca401320010eba9b9d17a",
+        // အရေးကြီးဆုံးအပိုင်း- သင်၏ Singapore Server URL ကို ထည့်သွင်းထားသည်
+        databaseURL: "https://atv-live-mm-default-rtdb.asia-southeast1.firebasedatabase.app"
+    };
 
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const database = firebase.database();
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const database = firebase.database();
 
-        function login() {
-            const e = document.getElementById('email').value;
-            const p = document.getElementById('password').value;
-            auth.signInWithEmailAndPassword(e, p).catch(err => alert("Login Error: " + err.message));
-        }
+    // ... (Login/Logout functions များ အရင်အတိုင်း ထားပါ) ...
 
-        function register() {
-            const e = document.getElementById('email').value;
-            const p = document.getElementById('password').value;
-            if(p.length < 6) return alert("Password သည် အနည်းဆုံး ၆ လုံးရှိရပါမည်");
-            auth.createUserWithEmailAndPassword(e, p).then(() => alert("အကောင့်ဖွင့်ပြီးပါပြီ")).catch(err => alert("Register Error: " + err.message));
-        }
+    function loadChannels() {
+        console.log("Connecting to Singapore Database...");
+        // 'channels' အောက်က data ကို တိုက်ရိုက်ဖတ်ခြင်း
+        database.ref('channels').on('value', (snapshot) => {
+            const data = snapshot.val();
+            const list = document.getElementById('channelList');
+            list.innerHTML = ""; 
 
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                document.getElementById('loginArea').style.display = 'none';
-                document.getElementById('mainContent').style.display = 'block';
-                document.getElementById('userInfoArea').innerHTML = `
-                    <div class="user-info">${user.email}</div>
-                    <button class="logout-btn" onclick="auth.signOut()">Logout</button>
-                `;
-                loadChannels();
-            } else {
-                document.getElementById('loginArea').style.display = 'block';
-                document.getElementById('mainContent').style.display = 'none';
-                document.getElementById('userInfoArea').innerHTML = "";
-            }
-        });
-
-        function loadChannels() {
-            database.ref('channels').on('value', (snapshot) => {
-                const data = snapshot.val();
-                const list = document.getElementById('channelList');
-                list.innerHTML = "";
-                if (data) {
-                    Object.keys(data).forEach(id => {
-                        const channel = data[id];
+            if (data) {
+                console.log("Channels found!");
+                Object.keys(data).forEach((id) => {
+                    const item = data[id];
+                    if (item && item.name && item.url) {
                         const btn = document.createElement('button');
-                        btn.className = "channel-btn";
-                        btn.innerHTML = channel.name;
+                        btn.style.cssText = "background:#222; color:white; border:1px solid #444; padding:12px; border-radius:8px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:5px;";
+                        
+                        const logoUrl = item.logo ? item.logo : "https://via.placeholder.com/50";
+                        btn.innerHTML = `
+                            <img src="${logoUrl}" style="width:45px; height:45px; object-fit:contain; border-radius:4px;" onerror="this.src='https://via.placeholder.com/50'">
+                            <span style="font-size:11px;">${item.name}</span>
+                        `;
+
                         btn.onclick = () => {
-                            playChannel(channel.url);
                             window.scrollTo({top: 0, behavior: 'smooth'});
+                            playChannel(item.url);
                         };
                         list.appendChild(btn);
-                    });
-                }
-            });
-        }
-
-        function playChannel(url) {
-            const video = document.getElementById('videoPlayer');
-            if (Hls.isSupported()) {
-                const hls = new Hls();
-                hls.loadSource(url);
-                hls.attachMedia(video);
-                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                video.src = url;
+                    }
+                });
+            } else {
+                list.innerHTML = "<p>ဒေတာ မတွေ့ပါ။ JSON Import လုပ်ထားတာ မှန်မမှန် ပြန်စစ်ပါ။</p>";
             }
-        }
-    </script>
+        });
+    }
+
+    // ... (playChannel function အရင်အတိုင်း ထားပါ) ...
+</script>
+
 </body>
 </html>
