@@ -11,48 +11,26 @@
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f0f0f; color: white; margin: 0; padding-bottom: 50px; }
-        .header { position: sticky; top: 0; width: 100%; background: #1a1a1a; padding: 15px 0; z-index: 1000; border-bottom: 2px solid red; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
-        .header h1 { margin: 0; font-size: 24px; color: red; letter-spacing: 2px; }
+        body { font-family: sans-serif; background-color: #0f0f0f; color: white; margin: 0; padding-bottom: 50px; text-align: center; }
+        .header { position: sticky; top: 0; width: 100%; background: #1a1a1a; padding: 15px 0; z-index: 1000; border-bottom: 2px solid red; }
+        .header h1 { margin: 0; font-size: 24px; color: red; }
         
         .auth-container { margin: 50px auto; max-width: 320px; padding: 25px; background: #1a1a1a; border-radius: 12px; border: 1px solid #333; }
         input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 6px; border: 1px solid #444; background: #000; color: white; box-sizing: border-box; }
-        .auth-btn { width: 100%; padding: 12px; background: red; color: white; border: none; cursor: pointer; font-weight: bold; border-radius: 6px; font-size: 16px; transition: 0.3s; }
-        .auth-btn:hover { background: #cc0000; }
+        .auth-btn { width: 100%; padding: 12px; background: red; color: white; border: none; cursor: pointer; font-weight: bold; border-radius: 6px; margin-bottom: 5px; }
 
         #mainContent { display: none; padding: 10px; }
         .video-container { width: 100%; max-width: 800px; margin: 10px auto; background: #000; border-radius: 8px; overflow: hidden; border: 1px solid #333; }
         video { width: 100%; aspect-ratio: 16/9; display: block; }
 
-        .channel-list { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); 
-            gap: 10px; 
-            padding: 15px; 
-            max-width: 900px; 
-            margin: 0 auto;
-        }
-        
-        .channel-btn {
-            background: #1a1a1a;
-            color: white;
-            border: 1px solid #333;
-            padding: 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: 0.2s;
-        }
-        .channel-btn:hover { border-color: red; background: #222; }
-        .channel-btn img { width: 45px; height: 45px; object-fit: contain; border-radius: 4px; background: #fff; padding: 2px; }
-        .channel-btn span { font-size: 11px; font-weight: 500; text-align: center; }
+        .channel-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; padding: 15px; max-width: 900px; margin: 0 auto; }
+        .channel-btn { background: #1a1a1a; color: white; border: 1px solid #333; padding: 10px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; transition: 0.2s; }
+        .channel-btn:hover { border-color: red; }
+        .channel-btn img { width: 50px; height: 50px; object-fit: contain; margin-bottom: 5px; background: #fff; padding: 2px; border-radius: 4px; }
+        .channel-btn span { font-size: 12px; }
 
-        .user-info { font-size: 11px; color: #aaa; margin: 8px 0; }
-        .logout-btn { background: #333; color: #fff; border: none; padding: 4px 12px; cursor: pointer; border-radius: 4px; font-size: 11px; }
+        .user-info { font-size: 11px; color: #aaa; margin-top: 5px; }
+        .logout-btn { background: #333; color: #fff; border: none; padding: 5px 12px; cursor: pointer; border-radius: 4px; font-size: 11px; }
     </style>
 </head>
 <body>
@@ -64,15 +42,97 @@
 
     <div id="loginArea" class="auth-container">
         <h3 style="margin-top:0;">User Login</h3>
-        <input type="email" id="email" placeholder="Email (ဥပမာ: user@gmail.com)">
+        <input type="email" id="email" placeholder="Email">
         <input type="password" id="password" placeholder="Password">
         <button class="auth-btn" onclick="login()">ဝင်ရောက်မည်</button>
-        <p style="font-size: 11px; color: #888; margin-top: 15px;">Account မရှိသေးရင် အလိုအလျောက် Register လုပ်ပေးပါမည်။</p>
+        <button class="auth-btn" style="background:#444;" onclick="register()">အကောင့်အသစ်ဖွင့်မည်</button>
     </div>
 
     <div id="mainContent">
         <div class="video-container">
-            <video id="videoPlayer" controls autoplay playsinline poster="https://via.placeholder.com/800x450?text=Select+a+Channel"></video>
+            <video id="videoPlayer" controls autoplay playsinline></video>
         </div>
-        
-        <h3 style="text-align:left; max-width:900px; margin: 20px auto 10px; padding: 0 15px; color:
+        <h3>Channel List</h3>
+        <div class="channel-list" id="channelList"></div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyB6alJRVgruWpnsWlagz6HiYjXxzRAJYqM",
+            authDomain: "atv-live-mm.firebaseapp.com",
+            projectId: "atv-live-mm",
+            storageBucket: "atv-live-mm.firebasestorage.app",
+            messagingSenderId: "1025513548303",
+            appId: "1:1025513548303:web:4ca401320010eba9b9d17a",
+            databaseURL: "https://atv-live-mm-default-rtdb.asia-southeast1.firebasedatabase.app"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        function login() {
+            const e = document.getElementById('email').value;
+            const p = document.getElementById('password').value;
+            auth.signInWithEmailAndPassword(e, p).catch(err => alert("Login Error: " + err.message));
+        }
+
+        function register() {
+            const e = document.getElementById('email').value;
+            const p = document.getElementById('password').value;
+            if(p.length < 6) return alert("Password အနည်းဆုံး ၆ လုံးရှိရမည်");
+            auth.createUserWithEmailAndPassword(e, p).catch(err => alert("Register Error: " + err.message));
+        }
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById('loginArea').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                document.getElementById('userInfoArea').innerHTML = `
+                    <div class="user-info">${user.email}</div>
+                    <button class="logout-btn" onclick="auth.signOut()">Logout</button>
+                `;
+                loadChannels();
+            } else {
+                document.getElementById('loginArea').style.display = 'block';
+                document.getElementById('mainContent').style.display = 'none';
+                document.getElementById('userInfoArea').innerHTML = "";
+            }
+        });
+
+        function loadChannels() {
+            database.ref('channels').on('value', (snapshot) => {
+                const data = snapshot.val();
+                const list = document.getElementById('channelList');
+                list.innerHTML = "";
+                if (data) {
+                    Object.keys(data).forEach(id => {
+                        const ch = data[id];
+                        const btn = document.createElement('button');
+                        btn.className = "channel-btn";
+                        const logo = ch.logo ? `<img src="${ch.logo}">` : `<div style="width:50px;height:50px;background:#333;margin-bottom:5px;display:flex;align-items:center;justify-content:center;font-size:10px;">No Logo</div>`;
+                        btn.innerHTML = `${logo}<span>${ch.name}</span>`;
+                        btn.onclick = () => {
+                            playChannel(ch.url);
+                            window.scrollTo({top: 0, behavior: 'smooth'});
+                        };
+                        list.appendChild(btn);
+                    });
+                }
+            });
+        }
+
+        function playChannel(url) {
+            const video = document.getElementById('videoPlayer');
+            if (Hls.isSupported()) {
+                const hls = new Hls();
+                hls.loadSource(url);
+                hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = url;
+            }
+        }
+    </script>
+</body>
+</html>
