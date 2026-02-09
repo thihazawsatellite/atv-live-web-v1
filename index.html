@@ -5,36 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ATV LIVE - MM</title>
     
+    <link rel="stylesheet" href="style.css">
+
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-
-    <style>
-        body { font-family: sans-serif; background-color: #0f0f0f; color: white; margin: 0; text-align: center; }
-        .header { position: sticky; top: 0; width: 100%; background: #1a1a1a; padding: 15px 0; z-index: 1000; border-bottom: 2px solid red; }
-        .auth-container { margin: 50px auto; max-width: 320px; padding: 25px; background: #1a1a1a; border-radius: 12px; border: 1px solid #333; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 6px; border: 1px solid #444; background: #000; color: white; box-sizing: border-box; }
-        .auth-btn { width: 100%; padding: 12px; background: red; color: white; border: none; cursor: pointer; font-weight: bold; border-radius: 6px; margin-bottom: 8px; }
-        #mainContent { display: none; padding: 10px; }
-        .video-container { width: 100%; max-width: 800px; margin: 10px auto; background: #000; border-radius: 8px; overflow: hidden; border: 1px solid #333; }
-        video { width: 100%; aspect-ratio: 16/9; display: block; }
-        .channel-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; padding: 15px; max-width: 900px; margin: 0 auto; }
-        .channel-btn { background: #1a1a1a; color: white; border: 1px solid #333; padding: 10px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; transition: 0.2s; }
-        .channel-btn:hover { border-color: red; }
-        .channel-btn img { width: 45px; height: 45px; object-fit: contain; margin-bottom: 5px; background: #fff; padding: 2px; border-radius: 4px; }
-        .logout-btn { background: #333; color: #fff; border: none; padding: 4px 12px; cursor: pointer; border-radius: 4px; font-size: 11px; margin-top: 5px; }
-    </style>
 </head>
 <body>
 
     <div class="header">
-        <h1 style="margin:0; color:red;">ATV LIVE</h1>
+        <h1>ATV LIVE</h1>
         <div id="userInfoArea"></div>
     </div>
 
     <div id="loginArea" class="auth-container">
-        <h3 style="margin-top:0;">User Login</h3>
+        <h3>User Login</h3>
         <input type="email" id="email" placeholder="Email">
         <input type="password" id="password" placeholder="Password">
         <button class="auth-btn" onclick="login()">ဝင်ရောက်မည်</button>
@@ -43,95 +29,12 @@
 
     <div id="mainContent">
         <div class="video-container">
-            <video id="videoPlayer" controls autoplay playsinline poster="https://via.placeholder.com/800x450?text=Select+a+Channel"></video>
+            <video id="videoPlayer" controls autoplay playsinline></video>
         </div>
-        <h3 style="color:red; margin-top:20px;">Channels</h3>
+        <h3>Channels</h3>
         <div class="channel-list" id="channelList">လိုင်းများ ဆွဲယူနေသည်...</div>
     </div>
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyB6alJRVgruWpnsWlagz6HiYjXxzRAJYqM",
-            authDomain: "atv-live-mm.firebaseapp.com",
-            projectId: "atv-live-mm",
-            storageBucket: "atv-live-mm.firebasestorage.app",
-            messagingSenderId: "1025513548303",
-            appId: "1:1025513548303:web:4ca401320010eba9b9d17a",
-            databaseURL: "https://atv-live-mm-default-rtdb.asia-southeast1.firebasedatabase.app"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const database = firebase.database();
-
-        function login() {
-            const e = document.getElementById('email').value;
-            const p = document.getElementById('password').value;
-            auth.signInWithEmailAndPassword(e, p).catch(err => alert("Login Error: " + err.message));
-        }
-
-        function register() {
-            const e = document.getElementById('email').value;
-            const p = document.getElementById('password').value;
-            if(p.length < 6) return alert("Password သည် အနည်းဆုံး ၆ လုံး ရှိရပါမည်");
-            auth.createUserWithEmailAndPassword(e, p).then(() => alert("အကောင့်ဖွင့်ပြီးပါပြီ")).catch(err => alert(err.message));
-        }
-
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                document.getElementById('loginArea').style.display = 'none';
-                document.getElementById('mainContent').style.display = 'block';
-                document.getElementById('userInfoArea').innerHTML = `
-                    <div style="font-size:11px; color:#aaa;">${user.email}</div>
-                    <button class="logout-btn" onclick="auth.signOut()">Logout</button>
-                `;
-                loadChannels();
-            } else {
-                document.getElementById('loginArea').style.display = 'block';
-                document.getElementById('mainContent').style.display = 'none';
-                document.getElementById('userInfoArea').innerHTML = "";
-            }
-        });
-
-        function loadChannels() {
-            // ဒေတာလမ်းကြောင်းကို သင်တင်ထားတဲ့ json အတိုင်း 'iptv' သို့ ပြောင်းလဲထားသည်
-            database.ref('iptv').on('value', (snapshot) => {
-                const data = snapshot.val();
-                const list = document.getElementById('channelList');
-                list.innerHTML = "";
-                
-                if (data) {
-                    Object.keys(data).forEach(id => {
-                        const ch = data[id];
-                        const btn = document.createElement('button');
-                        btn.className = "channel-btn";
-                        // Logo ရှိရင်ပြမယ်၊ မရှိရင် Default စာပြမယ်
-                        const logo = ch.logo ? `<img src="${ch.logo}">` : `<div style="height:45px; display:flex; align-items:center; font-size:10px;">LOGO</div>`;
-                        btn.innerHTML = `${logo}<span style="font-size:11px;">${ch.name}</span>`;
-                        btn.onclick = () => {
-                            playChannel(ch.url);
-                            window.scrollTo({top: 0, behavior: 'smooth'});
-                        };
-                        list.appendChild(btn);
-                    });
-                } else {
-                    list.innerHTML = "<p>ဒေတာ မရှိသေးပါ။ Firebase Database ရဲ့ 'iptv' အောက်မှာ data ရှိမရှိ စစ်ပါ။</p>";
-                }
-            });
-        }
-
-        function playChannel(url) {
-            const video = document.getElementById('videoPlayer');
-            if (Hls.isSupported()) {
-                const hls = new Hls();
-                hls.loadSource(url);
-                hls.attachMedia(video);
-                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                video.src = url;
-                video.play();
-            }
-        }
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
