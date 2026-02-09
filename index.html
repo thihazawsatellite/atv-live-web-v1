@@ -23,7 +23,7 @@
         .channel-btn { background: #1a1a1a; color: white; border: 1px solid #333; padding: 10px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; transition: 0.2s; }
         .channel-btn:hover { border-color: red; }
         .channel-btn img { width: 45px; height: 45px; object-fit: contain; margin-bottom: 5px; background: #fff; padding: 2px; border-radius: 4px; }
-        .logout-btn { background: #333; color: #fff; border: none; padding: 5px 12px; cursor: pointer; border-radius: 4px; font-size: 11px; margin-top: 5px; }
+        .logout-btn { background: #333; color: #fff; border: none; padding: 4px 12px; cursor: pointer; border-radius: 4px; font-size: 11px; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -43,7 +43,7 @@
 
     <div id="mainContent">
         <div class="video-container">
-            <video id="videoPlayer" controls autoplay playsinline></video>
+            <video id="videoPlayer" controls autoplay playsinline poster="https://via.placeholder.com/800x450?text=Select+a+Channel"></video>
         </div>
         <h3 style="color:red; margin-top:20px;">Channels</h3>
         <div class="channel-list" id="channelList">လိုင်းများ ဆွဲယူနေသည်...</div>
@@ -94,7 +94,7 @@
         });
 
         function loadChannels() {
-            // ဒေတာလမ်းကြောင်းကို 'iptv' သို့ ပြောင်းလဲလိုက်သည်
+            // ဒေတာလမ်းကြောင်းကို သင်တင်ထားတဲ့ json အတိုင်း 'iptv' သို့ ပြောင်းလဲထားသည်
             database.ref('iptv').on('value', (snapshot) => {
                 const data = snapshot.val();
                 const list = document.getElementById('channelList');
@@ -105,7 +105,7 @@
                         const ch = data[id];
                         const btn = document.createElement('button');
                         btn.className = "channel-btn";
-                        // Logo ရှိရင်ပြမယ်၊ မရှိရင် Default ပုံပြမယ်
+                        // Logo ရှိရင်ပြမယ်၊ မရှိရင် Default စာပြမယ်
                         const logo = ch.logo ? `<img src="${ch.logo}">` : `<div style="height:45px; display:flex; align-items:center; font-size:10px;">LOGO</div>`;
                         btn.innerHTML = `${logo}<span style="font-size:11px;">${ch.name}</span>`;
                         btn.onclick = () => {
